@@ -29,14 +29,12 @@ jobs:
       - name: Build
         run: cargo build --release --target wasm32-unknown-unknown
       - name: push to release
-        run: wasm-bindgen target\wasm32-unknown-unknown\release\hellorust.wasm --out-dir wasm --no-modules --no-typescript
-      - name: Copy CNAME into release
-        run: cp CNAME ./docs
+        run: wasm-bindgen target/wasm32-unknown-unknown/release/hellorust.wasm --out-dir web --no-modules --no-typescript
         
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          publish_dir: ./web
           force_orphan: true
-        if: github.ref == 'refs/heads/master'
+        #if: github.ref == 'refs/heads/master'
