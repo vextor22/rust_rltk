@@ -4,7 +4,7 @@ name: Pages Build
 
 # Build for pushes to main or manual triggers
 on:
-  workflow-dispatch:
+  workflow_dispatch:
   push:
     branches:
       - main
