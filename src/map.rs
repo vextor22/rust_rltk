@@ -119,7 +119,6 @@ fn apply_room_to_map(room: &Rect, map: &mut [TileType]) {
     }
 }
 
-
 fn apply_horizontal_tunnel(map: &mut [TileType], x1: i32, x2: i32, y: i32) {
     for x in min(x1, x2)..=max(x1, x2) {
         let idx = xy_idx(x, y);
