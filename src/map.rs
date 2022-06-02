@@ -82,6 +82,7 @@ pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
         let y = rng.range(1, 35);
         let w = rng.range(3, 10);
         let h = rng.range(3, 10);
+        let mut ok = true;
 
         let mut ok = true;
 
