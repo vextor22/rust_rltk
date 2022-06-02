@@ -1,44 +1,16 @@
-use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
+use rltk::{GameState, Rltk, RGB};
 use specs::prelude::*;
-use specs_derive::Component;
-use std::cmp::{max, min};
-
+mod map;
+pub use map::*;
+mod components;
+pub use components::*;
+mod player;
+pub use player::*;
+mod rect;
+pub use rect::*;
 // TODO: http://bfnightly.bracketproductions.com/rustbook/chapter_3.html
 
-#[derive(Component)]
-struct Position {
-    x: i32,
-    y: i32,
-}
-
-#[derive(Component)]
-struct Renderable {
-    glyph: rltk::FontCharType,
-    fg: RGB,
-    bg: RGB,
-}
-
-#[derive(Component)]
-struct LeftMover {}
-
-struct LeftWalker {}
-impl<'a> System<'a> for LeftWalker {
-    type SystemData = (ReadStorage<'a, LeftMover>, WriteStorage<'a, Position>);
-
-    fn run(&mut self, (lefty, mut pos): Self::SystemData) {
-        for (_lefty, pos) in (&lefty, &mut pos).join() {
-            pos.x -= 1;
-            if pos.x < 0 {
-                pos.x = 79;
-            }
-        }
-    }
-}
-
-#[derive(Component, Debug)]
-struct Player {}
-
-struct State {
+pub struct State {
     ecs: World,
 }
 impl GameState for State {
@@ -47,6 +19,9 @@ impl GameState for State {
 
         self.run_systems();
         player_input(self, ctx);
+
+        let map = self.ecs.fetch::<Vec<TileType>>();
+        draw_map(&map, ctx);
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
         for (pos, render) in (&positions, &renderables).join() {
@@ -56,46 +31,8 @@ impl GameState for State {
 }
 impl State {
     fn run_systems(&mut self) {
-        let mut lw = LeftWalker {};
-        lw.run_now(&self.ecs);
+        // Do things here when we have a system
         self.ecs.maintain();
-    }
-}
-
-fn create_red_smile(world: &mut World, x: i32, y: i32) {
-    world
-        .create_entity()
-        .with(Position { x: x, y: y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('☺'),
-            fg: RGB::named(rltk::RED),
-            bg: RGB::named(rltk::BLACK),
-        })
-        .with(LeftMover {})
-        .build();
-}
-
-fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
-    let mut positions = ecs.write_storage::<Position>();
-    let mut players = ecs.write_storage::<Player>();
-
-    for (_player, pos) in (&mut players, &mut positions).join() {
-        pos.x = min(79, max(0, pos.x + delta_x));
-        pos.y = min(49, max(0, pos.y + delta_y));
-    }
-}
-
-fn player_input(gs: &mut State, ctx: &mut Rltk) {
-    // Player input
-    match ctx.key {
-        None => {}
-        Some(key) => match key {
-            VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
-            VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
-            VirtualKeyCode::Up => try_move_player(0, -1, &mut gs.ecs),
-            VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
-            _ => {}
-        },
     }
 }
 
@@ -111,9 +48,8 @@ fn main() -> rltk::BError {
     //Register those components
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
-    gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
-
+    gs.ecs.insert(new_map_rooms_and_corridors());
     // The player's entity
     gs.ecs
         .create_entity()
@@ -127,8 +63,5 @@ fn main() -> rltk::BError {
         .build();
 
     // The non-player entities
-    for i in 0..10 {
-        create_red_smile(&mut gs.ecs, i * 7, 20)
-    }
     rltk::main_loop(context, gs)
 }
