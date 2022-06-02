@@ -72,6 +72,7 @@ pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
 
 pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
     let mut map = vec![TileType::Wall; 80 * 50];
+    let mut rooms: Vec<Rect> = Vec::new();
 
     let mut rng = RandomNumberGenerator::new();
     let starting_room = Rect::new(30, 20, 10, 15);
@@ -81,9 +82,29 @@ pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
         let y = rng.range(1, 35);
         let w = rng.range(3, 10);
         let h = rng.range(3, 10);
+        let mut ok = true;
 
         let new_rect = Rect::new(x, y, w, h);
-        apply_room_to_map(&new_rect, &mut map);
+        for other_room in rooms.iter() {
+            if new_rect.intersect(other_room) {
+                ok = false
+            }
+        }
+        if ok {
+            apply_room_to_map(&new_rect, &mut map);
+            if !rooms.is_empty() {
+                let (new_x, new_y) = new_rect.center();
+                let (prev_x, prev_y) = rooms[rooms.len() - 1].center();
+                if rng.range(0, 2) == 1 {
+                    apply_horizontal_tunnel(&mut map, prev_x, new_x, prev_y);
+                    apply_vertical_tunnel(&mut map, prev_y, new_y, new_x);
+                } else {
+                    apply_vertical_tunnel(&mut map, prev_y, new_y, prev_x);
+                    apply_horizontal_tunnel(&mut map, prev_x, new_x, new_y);
+                }
+            }
+            rooms.push(new_rect);
+        }
     }
 
     map
@@ -97,11 +118,20 @@ fn apply_room_to_map(room: &Rect, map: &mut [TileType]) {
     }
 }
 
-//fn apply horizontal_tunnel(map: &mut [TileType], x1:i32, x2:i32, y:i32){
-//    for x in min(x1,x2)..=(max(x1,x2)){
-//        let idx = xy_idx(x,y);
-//        if idx > 0 && idx < 80*50{
-//
-//        }
-//    }
-//}
+fn apply_horizontal_tunnel(map: &mut [TileType], x1: i32, x2: i32, y: i32) {
+    for x in min(x1, x2)..=max(x1, x2) {
+        let idx = xy_idx(x, y);
+        if idx > 0 && idx < 80 * 50 {
+            map[idx as usize] = TileType::Floor;
+        }
+    }
+}
+
+fn apply_vertical_tunnel(map: &mut [TileType], x1: i32, x2: i32, x: i32) {
+    for y in min(x1, x2)..=max(x1, x2) {
+        let idx = xy_idx(x, y);
+        if idx > 0 && idx < 80 * 50 {
+            map[idx as usize] = TileType::Floor;
+        }
+    }
+}
