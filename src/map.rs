@@ -89,6 +89,7 @@ impl Map {
         }
 
         map
+<<<<<<< HEAD
     }
     /// Draw a slice of the map
     pub fn draw_map(&self, ecs: &World, ctx: &mut Rltk) {
@@ -135,5 +136,35 @@ impl Algorithm2D for Map {
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
         self.tiles[idx as usize] == TileType::Wall
+=======
+    }
+    /// Draw a slice of the map
+    pub fn draw_map(&self, ctx: &mut Rltk) {
+        let mut y = 0;
+        let mut x = 0;
+        for tile in self.tiles.iter() {
+            match tile {
+                TileType::Floor => ctx.set(
+                    x,
+                    y,
+                    RGB::from_f32(0.5, 0.5, 0.5),
+                    RGB::from_f32(0., 0., 0.),
+                    rltk::to_cp437('.'),
+                ),
+                TileType::Wall => ctx.set(
+                    x,
+                    y,
+                    RGB::from_f32(0.0, 1.0, 0.0),
+                    RGB::from_f32(0., 0.1, 0.1),
+                    rltk::to_cp437('#'),
+                ),
+            }
+            x += 1;
+            if x > 79 {
+                x = 0;
+                y += 1;
+            }
+        }
+>>>>>>> 990b508 (Refactor map to struct)
     }
 }

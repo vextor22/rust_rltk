@@ -23,7 +23,11 @@ impl GameState for State {
         player_input(self, ctx);
 
         let map = self.ecs.fetch::<Map>();
+<<<<<<< HEAD
         map.draw_map(&self.ecs, ctx);
+=======
+        map.draw_map(ctx);
+>>>>>>> 990b508 (Refactor map to struct)
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
         for (pos, render) in (&positions, &renderables).join() {
