@@ -8,6 +8,8 @@ mod player;
 pub use player::*;
 mod rect;
 pub use rect::*;
+mod visibility_system;
+use visibility_system::VisibilitySystem;
 // TODO: http://bfnightly.bracketproductions.com/rustbook/chapter_3.html
 
 pub struct State {
@@ -21,7 +23,7 @@ impl GameState for State {
         player_input(self, ctx);
 
         let map = self.ecs.fetch::<Map>();
-        map.draw_map(ctx);
+        map.draw_map(&self.ecs, ctx);
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
         for (pos, render) in (&positions, &renderables).join() {
@@ -32,6 +34,8 @@ impl GameState for State {
 impl State {
     fn run_systems(&mut self) {
         // Do things here when we have a system
+        let mut vis = VisibilitySystem {};
+        vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -49,6 +53,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -67,6 +72,10 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+        })
         .build();
 
     // The non-player entities
