@@ -70,18 +70,17 @@ pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
     }
 }
 
-pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
+pub fn new_map_rooms_and_corridors() -> (Vec<Rect>, Vec<TileType>) {
     let mut map = vec![TileType::Wall; 80 * 50];
     let mut rooms: Vec<Rect> = Vec::new();
 
     let mut rng = RandomNumberGenerator::new();
-    let starting_room = Rect::new(30, 20, 10, 15);
-    apply_room_to_map(&starting_room, &mut map);
     for _i in 0..20 {
         let x = rng.range(1, 65);
         let y = rng.range(1, 35);
         let w = rng.range(3, 10);
         let h = rng.range(3, 10);
+        let mut ok = true;
 
         let mut ok = true;
 
@@ -108,7 +107,7 @@ pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
         }
     }
 
-    map
+    (rooms, map)
 }
 
 fn apply_room_to_map(room: &Rect, map: &mut [TileType]) {
@@ -118,7 +117,6 @@ fn apply_room_to_map(room: &Rect, map: &mut [TileType]) {
         }
     }
 }
-
 
 fn apply_horizontal_tunnel(map: &mut [TileType], x1: i32, x2: i32, y: i32) {
     for x in min(x1, x2)..=max(x1, x2) {
