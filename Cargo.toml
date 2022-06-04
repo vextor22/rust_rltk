@@ -11,3 +11,7 @@ rltk = {version = "0.8.1"}
 specs = "0.16.1"
 specs-derive = "0.4.1"
 getrandom = { version = "0.2", features = ["js"] }
+
+[profile.release]
+opt-level = 's'
+lto = "thin"

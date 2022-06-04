@@ -1,6 +1,5 @@
-use super::{Player, Rect, Viewshed};
+use super::Rect;
 use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
-use specs::prelude::*;
 use std::cmp::{max, min};
 
 #[derive(PartialEq, Copy, Clone)]
@@ -14,6 +13,8 @@ pub struct Map {
     pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
+    pub revealed_tiles: Vec<bool>,
+    pub visible_tiles: Vec<bool>,
 }
 
 impl Map {
@@ -51,6 +52,8 @@ impl Map {
             rooms: Vec::new(),
             width: 80,
             height: 50,
+            revealed_tiles: vec![false; 80 * 50],
+            visible_tiles: vec![false; 80 * 50],
         };
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
@@ -62,7 +65,8 @@ impl Map {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.range(1, map.width - w - 1) - 1;
-            let y = rng.range(1, map.height - w - 1) - 1;
+            let y = rng.range(1, map.height - h - 1) - 1;
+            println!("Height {}, Width {}, x {}, y {}", h, w, x, y);
             let mut ok = true;
 
             let new_rect = Rect::new(x, y, w, h);
@@ -91,37 +95,32 @@ impl Map {
         map
     }
     /// Draw a slice of the map
-    pub fn draw_map(&self, ecs: &World, ctx: &mut Rltk) {
-        let mut viewsheds = ecs.write_storage::<Viewshed>();
-        let mut players = ecs.write_storage::<Player>();
-        for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
-            let mut y = 0;
-            let mut x = 0;
-            for tile in self.tiles.iter() {
-                let pt = Point::new(x, y);
-                if viewshed.visible_tiles.contains(&pt) {
-                    match tile {
-                        TileType::Floor => ctx.set(
-                            x,
-                            y,
-                            RGB::from_f32(0.5, 0.5, 0.5),
-                            RGB::from_f32(0., 0., 0.),
-                            rltk::to_cp437('.'),
-                        ),
-                        TileType::Wall => ctx.set(
-                            x,
-                            y,
-                            RGB::from_f32(0.0, 1.0, 0.0),
-                            RGB::from_f32(0., 0.1, 0.1),
-                            rltk::to_cp437('#'),
-                        ),
+    pub fn draw_map(&self, ctx: &mut Rltk) {
+        let mut y = 0;
+        let mut x = 0;
+        for (idx, tile) in self.tiles.iter().enumerate() {
+            if self.revealed_tiles[idx] {
+                let glyph;
+                let mut fg;
+                match tile {
+                    TileType::Floor => {
+                        glyph = rltk::to_cp437('.');
+                        fg = RGB::from_f32(0.0, 1., 0.0);
+                    }
+                    TileType::Wall => {
+                        glyph = rltk::to_cp437('#');
+                        fg = RGB::from_f32(0.0, 1., 0.0);
                     }
                 }
-                x += 1;
-                if x > 79 {
-                    x = 0;
-                    y += 1;
-                }
+                if !self.visible_tiles[idx] {
+                    fg = fg.to_greyscale()
+                };
+                ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+            }
+            x += 1;
+            if x > 79 {
+                x = 0;
+                y += 1;
             }
         }
     }
